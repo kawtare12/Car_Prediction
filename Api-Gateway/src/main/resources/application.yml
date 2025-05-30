@@ -1,0 +1,41 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      httpclient:
+        responseTimeout: 5000
+        connectTimeout: 5000
+        maxConnections: 100
+      routes:
+        - id: auth
+          uri: lb://AUTH  # Le nom du service d'authentification enregistré dans Eureka
+          predicates:
+            - Path=/auth/**
+          filters:
+            - RewritePath=/auth/(?<segment>.*), /$\{segment}
+
+        - id: flask-predictor
+          uri: http://127.0.0.1:5000  # Le nom du service Flask-Predictor enregistré dans Eureka
+          predicates:
+            - Path=/predictor/**  # Remplacez ce chemin par celui que vous souhaitez pour le service Flask
+          filters:
+            - RewritePath=/predictor/(?<segment>.*), /$\{segment}
+
+        - id: annonce-service
+          uri: lb://ANNONCE  # Le nom du service Flask-Predictor enregistré dans Eureka
+          predicates:
+            - Path=/annonce/**  # Remplacez ce chemin par celui que vous souhaitez pour le service Flask
+          filters:
+            - RewritePath=/annonce/(?<segment>.*), /$\{segment}
+
+    discovery:
+      enabled: true  # Active la découverte de services avec Eureka
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/  # URL de votre serveur Eureka
